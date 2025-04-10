@@ -78,55 +78,65 @@ if 'sheep_data' not in st.session_state:
 if 'goat_data' not in st.session_state:
     st.session_state.goat_data = []
 
-# Create tabs for different sections
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Paddock Details", "Cattle", "Sheep", "Goats", "Results"])
+# Add a sidebar with instructions
+st.sidebar.title("Instructions")
+st.sidebar.write("""
+1. Enter your paddock details and forage information
+2. Add your cattle (if any)
+3. Add your sheep (if any)
+4. Add your goats (if any)
+5. Review your grazing budget results at the bottom
+""")
 
-with tab1:
-    st.header("Paddock and Forage Details")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        total_standing_dm_per_hectare = st.number_input(
-            "Total standing dry matter (kg/ha)",
-            min_value=0.0,
-            value=5000.0,
-            help="Enter the total amount of dry matter available in the paddock"
-        )
-        
-        paddock_area_hectares = st.number_input(
-            "Paddock area (hectares)",
-            min_value=0.1,
-            value=10.0,
-            help="Enter the total area of the paddock in hectares"
-        )
-    
-    with col2:
-        desired_rdm_per_hectare = st.number_input(
-            "Desired residual dry matter per hectare (kg/ha)",
-            min_value=0.0,
-            value=1000.0,
-            help="Enter the amount of dry matter you want to leave behind per hectare"
-        )
-        
-        productivity_level = st.selectbox(
-            "Overall productivity level of your grazing system",
-            options=["High", "Moderate", "Low"],
-            help="Higher productivity means animals consume less dry matter per kg of body weight"
-        )
-    
-    # Calculate total_standing_dm
-    total_standing_dm = total_standing_dm_per_hectare * paddock_area_hectares
-    st.info(f"Total standing dry matter: {total_standing_dm:.2f} kg")
-    
-    # Calculate total desired RDM
-    desired_total_rdm = desired_rdm_per_hectare * paddock_area_hectares
-    st.info(f"Total desired residual dry matter: {desired_total_rdm:.2f} kg")
+st.sidebar.info("This calculator uses standard intake values based on Animal Equivalents (AE) and Dry Sheep Equivalents (DSE) to estimate grazing days.")
 
-with tab2:
-    st.header("Cattle Details")
-    st.write("Add details about your cattle herd")
+# SECTION 1: PADDOCK DETAILS
+st.header("📊 Paddock and Forage Details", divider="gray")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    total_standing_dm_per_hectare = st.number_input(
+        "Total standing dry matter (kg/ha)",
+        min_value=0.0,
+        value=5000.0,
+        help="Enter the total amount of dry matter available in the paddock"
+    )
     
+    paddock_area_hectares = st.number_input(
+        "Paddock area (hectares)",
+        min_value=0.1,
+        value=10.0,
+        help="Enter the total area of the paddock in hectares"
+    )
+
+with col2:
+    desired_rdm_per_hectare = st.number_input(
+        "Desired residual dry matter per hectare (kg/ha)",
+        min_value=0.0,
+        value=1000.0,
+        help="Enter the amount of dry matter you want to leave behind per hectare"
+    )
+    
+    productivity_level = st.selectbox(
+        "Overall productivity level of your grazing system",
+        options=["High", "Moderate", "Low"],
+        help="Higher productivity means animals consume less dry matter per kg of body weight"
+    )
+
+# Calculate total_standing_dm
+total_standing_dm = total_standing_dm_per_hectare * paddock_area_hectares
+st.info(f"Total standing dry matter: {total_standing_dm:.2f} kg")
+
+# Calculate total desired RDM
+desired_total_rdm = desired_rdm_per_hectare * paddock_area_hectares
+st.info(f"Total desired residual dry matter: {desired_total_rdm:.2f} kg")
+
+# SECTION 2: CATTLE DETAILS
+st.header("🐄 Cattle Details", divider="gray")
+
+cattle_expander = st.expander("Add and manage cattle")
+with cattle_expander:
     # Add new cattle type form
     with st.form("add_cattle_form"):
         st.subheader("Add Cattle Type")
@@ -168,25 +178,26 @@ with tab2:
             st.session_state.cattle_data.append(new_entry)
             st.session_state.total_ae += number_of_animals * ae_rating
             st.success(f"Added {number_of_animals} {cattle_type_name}")
-    
-    # Display current cattle data
-    if st.session_state.cattle_data:
-        st.subheader("Current Cattle Herd")
-        cattle_df = pd.DataFrame(st.session_state.cattle_data)
-        st.dataframe(cattle_df, use_container_width=True)
-        
-        total_ae = sum(entry["Total AE"] for entry in st.session_state.cattle_data)
-        st.info(f"Total Animal Equivalents (AE): {total_ae:.2f}")
-        
-        if st.button("Clear Cattle Data"):
-            st.session_state.cattle_data = []
-            st.session_state.total_ae = 0
-            st.experimental_rerun()
 
-with tab3:
-    st.header("Sheep Details")
-    st.write("Add details about your sheep flock")
+# Display current cattle data
+if st.session_state.cattle_data:
+    st.subheader("Current Cattle Herd")
+    cattle_df = pd.DataFrame(st.session_state.cattle_data)
+    st.dataframe(cattle_df, use_container_width=True)
     
+    total_ae = sum(entry["Total AE"] for entry in st.session_state.cattle_data)
+    st.info(f"Total Animal Equivalents (AE): {total_ae:.2f}")
+    
+    if st.button("Clear Cattle Data"):
+        st.session_state.cattle_data = []
+        st.session_state.total_ae = 0
+        st.experimental_rerun()
+
+# SECTION 3: SHEEP DETAILS
+st.header("🐑 Sheep Details", divider="gray")
+
+sheep_expander = st.expander("Add and manage sheep")
+with sheep_expander:
     # Add new sheep form
     with st.form("add_sheep_form"):
         st.subheader("Add Sheep Type")
@@ -224,25 +235,26 @@ with tab3:
             st.session_state.sheep_data.append(new_entry)
             st.session_state.total_dse += number_of_animals_sheep * dse_rating
             st.success(f"Added {number_of_animals_sheep} {sheep_type_name} - {animal_class_name}")
-    
-    # Display current sheep data
-    if st.session_state.sheep_data:
-        st.subheader("Current Sheep Flock")
-        sheep_df = pd.DataFrame(st.session_state.sheep_data)
-        st.dataframe(sheep_df, use_container_width=True)
-        
-        total_sheep_dse = sum(entry["Total DSE"] for entry in st.session_state.sheep_data)
-        st.info(f"Total Sheep DSE: {total_sheep_dse:.2f}")
-        
-        if st.button("Clear Sheep Data"):
-            st.session_state.sheep_data = []
-            st.session_state.total_dse = sum(entry["Total DSE"] for entry in st.session_state.goat_data)
-            st.experimental_rerun()
 
-with tab4:
-    st.header("Goat Details")
-    st.write("Add details about your goat herd")
+# Display current sheep data
+if st.session_state.sheep_data:
+    st.subheader("Current Sheep Flock")
+    sheep_df = pd.DataFrame(st.session_state.sheep_data)
+    st.dataframe(sheep_df, use_container_width=True)
     
+    total_sheep_dse = sum(entry["Total DSE"] for entry in st.session_state.sheep_data)
+    st.info(f"Total Sheep DSE: {total_sheep_dse:.2f}")
+    
+    if st.button("Clear Sheep Data"):
+        st.session_state.sheep_data = []
+        st.session_state.total_dse = sum(entry["Total DSE"] for entry in st.session_state.goat_data)
+        st.experimental_rerun()
+
+# SECTION 4: GOAT DETAILS
+st.header("🐐 Goat Details", divider="gray")
+
+goat_expander = st.expander("Add and manage goats")
+with goat_expander:
     # Add new goat form
     with st.form("add_goat_form"):
         st.subheader("Add Goat Type")
@@ -296,125 +308,113 @@ with tab4:
             st.session_state.goat_data.append(new_entry)
             st.session_state.total_dse += number_of_animals_goat * dse_rating
             st.success(f"Added {number_of_animals_goat} {goat_type_name} - {animal_class_name}")
-    
-    # Display current goat data
-    if st.session_state.goat_data:
-        st.subheader("Current Goat Herd")
-        goat_df = pd.DataFrame(st.session_state.goat_data)
-        st.dataframe(goat_df, use_container_width=True)
-        
-        total_goat_dse = sum(entry["Total DSE"] for entry in st.session_state.goat_data)
-        st.info(f"Total Goat DSE: {total_goat_dse:.2f}")
-        
-        if st.button("Clear Goat Data"):
-            st.session_state.goat_data = []
-            st.session_state.total_dse = sum(entry["Total DSE"] for entry in st.session_state.sheep_data)
-            st.experimental_rerun()
 
-with tab5:
-    st.header("Results")
+# Display current goat data
+if st.session_state.goat_data:
+    st.subheader("Current Goat Herd")
+    goat_df = pd.DataFrame(st.session_state.goat_data)
+    st.dataframe(goat_df, use_container_width=True)
     
-    total_ae = st.session_state.total_ae
-    total_dse = st.session_state.total_dse
+    total_goat_dse = sum(entry["Total DSE"] for entry in st.session_state.goat_data)
+    st.info(f"Total Goat DSE: {total_goat_dse:.2f}")
     
-    # Display herd summary
-    st.subheader("Herd Summary")
+    if st.button("Clear Goat Data"):
+        st.session_state.goat_data = []
+        st.session_state.total_dse = sum(entry["Total DSE"] for entry in st.session_state.sheep_data)
+        st.experimental_rerun()
+
+# SECTION 5: RESULTS
+st.header("📈 Results", divider="gray")
+
+total_ae = st.session_state.total_ae
+total_dse = st.session_state.total_dse
+
+# Display herd summary
+st.subheader("Herd Summary")
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Total Animal Equivalents (AE)", f"{total_ae:.2f}")
+with col2:
+    st.metric("Total Dry Sheep Equivalents (DSE)", f"{total_dse:.2f}")
+
+# Show breakdown of DSE by animal type
+if st.session_state.sheep_data or st.session_state.goat_data:
+    sheep_dse = sum(entry["Total DSE"] for entry in st.session_state.sheep_data)
+    goat_dse = sum(entry["Total DSE"] for entry in st.session_state.goat_data)
+    
+    st.subheader("DSE Breakdown")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total Animal Equivalents (AE)", f"{total_ae:.2f}")
+        st.metric("Sheep DSE", f"{sheep_dse:.2f}")
     with col2:
-        st.metric("Total Dry Sheep Equivalents (DSE)", f"{total_dse:.2f}")
-    
-    # Show breakdown of DSE by animal type
-    if st.session_state.sheep_data or st.session_state.goat_data:
-        sheep_dse = sum(entry["Total DSE"] for entry in st.session_state.sheep_data)
-        goat_dse = sum(entry["Total DSE"] for entry in st.session_state.goat_data)
-        
-        st.subheader("DSE Breakdown")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Sheep DSE", f"{sheep_dse:.2f}")
-        with col2:
-            st.metric("Goat DSE", f"{goat_dse:.2f}")
-    
-    # Calculate daily feed demand
-    if productivity_level == "High":
-        intake_per_ae = 7.5
-        intake_per_dse = 0.89
-    elif productivity_level == "Moderate":
-        intake_per_ae = 8.0
-        intake_per_dse = 0.95
-    else:  # Low
-        intake_per_ae = 8.5
-        intake_per_dse = 1.01
-    
-    total_daily_demand = (total_ae * intake_per_ae) + (total_dse * intake_per_dse)
-    
-    # Ensure available dry matter isn't negative
-    available_dm_for_grazing = max(0, total_standing_dm - desired_total_rdm)
-    
-    # Calculate grazing days
-    if total_daily_demand > 0:
-        grazing_days = available_dm_for_grazing / total_daily_demand
-    else:
-        grazing_days = 0
-    
-    # Display results
-    st.subheader("Grazing Budget Results")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Total Daily Demand (kg/day)", f"{total_daily_demand:.2f}")
-    with col2:
-        st.metric("Available Dry Matter (kg)", f"{available_dm_for_grazing:.2f}")
-    with col3:
-        st.metric("Estimated Grazing Days", f"{grazing_days:.1f}")
-    
-    # Add visualization
-    if total_daily_demand > 0 and total_standing_dm > 0:
-        st.subheader("Feed Budget Visualization")
-        
-        # Create data for the chart
-        days = min(int(grazing_days * 1.5), 100)  # Show up to 100 days or 1.5x the estimated grazing days
-        forage_remaining = []
-        
-        current_dm = total_standing_dm
-        for _ in range(days):
-            forage_remaining.append(current_dm)
-            current_dm = max(desired_total_rdm, current_dm - total_daily_demand)
-        
-        # Create the chart
-        chart_data = pd.DataFrame({
-            'Day': range(days),
-            'Forage Remaining (kg)': forage_remaining,
-            'Residual Target': [desired_total_rdm] * days
-        })
-        
-        st.line_chart(
-            chart_data.set_index('Day'),
-            height=400
-        )
-    
-    st.write("""
-    ### Notes:
-    - This is an estimate based on the provided information and standard values
-    - Actual grazing days may vary based on weather, pasture growth, and animal behavior
-    - Regular monitoring is recommended to adjust grazing plans as needed
-    """)
+        st.metric("Goat DSE", f"{goat_dse:.2f}")
 
-# Add a sidebar with instructions
-st.sidebar.title("Instructions")
-st.sidebar.write("""
-1. Enter your paddock details and forage information in the Paddock Details tab
-2. Add your cattle in the Cattle tab
-3. Add your sheep in the Sheep tab
-4. Add your goats in the Goats tab
-5. View your grazing budget results in the Results tab
+# Calculate daily feed demand
+if productivity_level == "High":
+    intake_per_ae = 7.5
+    intake_per_dse = 0.89
+elif productivity_level == "Moderate":
+    intake_per_ae = 8.0
+    intake_per_dse = 0.95
+else:  # Low
+    intake_per_ae = 8.5
+    intake_per_dse = 1.01
+
+total_daily_demand = (total_ae * intake_per_ae) + (total_dse * intake_per_dse)
+
+# Ensure available dry matter isn't negative
+available_dm_for_grazing = max(0, total_standing_dm - desired_total_rdm)
+
+# Calculate grazing days
+if total_daily_demand > 0:
+    grazing_days = available_dm_for_grazing / total_daily_demand
+else:
+    grazing_days = 0
+
+# Display results
+st.subheader("Grazing Budget Results")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Total Daily Demand (kg/day)", f"{total_daily_demand:.2f}")
+with col2:
+    st.metric("Available Dry Matter (kg)", f"{available_dm_for_grazing:.2f}")
+with col3:
+    st.metric("Estimated Grazing Days", f"{grazing_days:.1f}")
+
+# Add visualization
+if total_daily_demand > 0 and total_standing_dm > 0:
+    st.subheader("Feed Budget Visualization")
+    
+    # Create data for the chart
+    days = min(int(grazing_days * 1.5), 100)  # Show up to 100 days or 1.5x the estimated grazing days
+    forage_remaining = []
+    
+    current_dm = total_standing_dm
+    for _ in range(days):
+        forage_remaining.append(current_dm)
+        current_dm = max(desired_total_rdm, current_dm - total_daily_demand)
+    
+    # Create the chart
+    chart_data = pd.DataFrame({
+        'Day': range(days),
+        'Forage Remaining (kg)': forage_remaining,
+        'Residual Target': [desired_total_rdm] * days
+    })
+    
+    st.line_chart(
+        chart_data.set_index('Day'),
+        height=400
+    )
+
+st.write("""
+### Notes:
+- This is an estimate based on the provided information and standard values
+- Actual grazing days may vary based on weather, pasture growth, and animal behavior
+- Regular monitoring is recommended to adjust grazing plans as needed
 """)
-
-st.sidebar.info("This calculator uses standard intake values based on Animal Equivalents (AE) and Dry Sheep Equivalents (DSE) to estimate grazing days.")
 
 # Add a footer
 st.markdown("---")
-st.caption("Forage Budget Calculator | v1.1")
+st.caption("Forage Budget Calculator | v1.2")

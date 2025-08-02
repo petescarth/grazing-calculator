@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forage Budget Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🌾 Forage Budget Calculator</h1>
+            <p>Calculate available grazing days based on forage availability and herd composition</p>
+        </header>
+
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <h3>Instructions</h3>
+                <ol>
+                    <li>Enter your paddock details and forage information</li>
+                    <li>Add your cattle (if any)</li>
+                    <li>Add your sheep (if any)</li>
+                    <li>Add your goats (if any)</li>
+                    <li>Review your grazing budget results</li>
+                </ol>
+                <div class="info-box">
+                    <p>This calculator uses standard intake values based on Animal Equivalents (AE) and Dry Sheep Equivalents (DSE) to estimate grazing days.</p>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <!-- Paddock Details Section -->
+            <section class="section">
+                <h2>📊 Paddock and Forage Details</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="standingDM">Total standing dry matter (kg/ha)</label>
+                        <input type="number" id="standingDM" value="5000" min="0" step="100">
+                        <small>Enter the total amount of dry matter available in the paddock</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paddockArea">Paddock area (hectares)</label>
+                        <input type="number" id="paddockArea" value="10" min="0.1" step="0.1">
+                        <small>Enter the total area of the paddock in hectares</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="residualDM">Desired residual dry matter per hectare (kg/ha)</label>
+                        <input type="number" id="residualDM" value="1000" min="0" step="100">
+                        <small>Enter the amount of dry matter you want to leave behind per hectare</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productivityLevel">Overall productivity level</label>
+                        <select id="productivityLevel">
+                            <option value="High">High</option>
+                            <option value="Moderate" selected>Moderate</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <small>Higher productivity means animals consume less dry matter per kg of body weight</small>
+                    </div>
+                </div>
+                
+                <div class="info-display">
+                    <div class="info-item">
+                        <span class="info-label">Total standing dry matter:</span>
+                        <span id="totalStandingDM" class="info-value">50,000 kg</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total desired residual dry matter:</span>
+                        <span id="totalResidualDM" class="info-value">10,000 kg</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cattle Section -->
+            <section class="section">
+                <h2>🐄 Cattle Details</h2>
+                <div class="expandable-section">
+                    <button class="expand-btn" onclick="toggleSection('cattle-form')">Add and manage cattle</button>
+                    <div id="cattle-form" class="expandable-content">
+                        <form id="addCattleForm" class="animal-form">
+                            <h3>Add Cattle Type</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="cattleTypeName">Cattle type name</label>
+                                    <input type="text" id="cattleTypeName" placeholder="e.g., Breeder Cows, Steers 1-2 years">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="cattleNumber">Number of animals</label>
+                                    <input type="number" id="cattleNumber" value="10" min="1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cattleCategory">Animal category</label>
+                                    <select id="cattleCategory">
+                                        <option value="Females <1 year">Females <1 year</option>
+                                        <option value="Females 1-2 years">Females 1-2 years</option>
+                                        <option value="Females 2-3 years">Females 2-3 years</option>
+                                        <option value="Females 3-4 years">Females 3-4 years</option>
+                                        <option value="Females 4+ years">Females 4+ years</option>
+                                        <option value="Steers <1 year">Steers <1 year</option>
+                                        <option value="Steers 1-2 years">Steers 1-2 years</option>
+                                        <option value="Steers 2-3 years">Steers 2-3 years</option>
+                                        <option value="Steers 3-4 years">Steers 3-4 years</option>
+                                        <option value="Bulls">Bulls</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cattleProductivity">Animal productivity level</label>
+                                    <select id="cattleProductivity">
+                                        <option value="High">High</option>
+                                        <option value="Moderate">Moderate</option>
+                                        <option value="Low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Cattle Type</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="cattleDisplay" class="animal-display" style="display: none;">
+                    <h3>Current Cattle Herd</h3>
+                    <div class="table-container">
+                        <table id="cattleTable">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Number</th>
+                                    <th>Productivity</th>
+                                    <th>AE Rating</th>
+                                    <th>Total AE</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="total-display">
+                        <span>Total Animal Equivalents (AE): <strong id="totalAE">0.00</strong></span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearCattleData()">Clear Cattle Data</button>
+                </div>
+            </section>
+
+            <!-- Sheep Section -->
+            <section class="section">
+                <h2>🐑 Sheep Details</h2>
+                <div class="expandable-section">
+                    <button class="expand-btn" onclick="toggleSection('sheep-form')">Add and manage sheep</button>
+                    <div id="sheep-form" class="expandable-content">
+                        <form id="addSheepForm" class="animal-form">
+                            <h3>Add Sheep Type</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="sheepTypeName">Sheep group name</label>
+                                    <input type="text" id="sheepTypeName" placeholder="e.g., Ewes, Lambs, Rams">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="sheepNumber">Number of sheep</label>
+                                    <input type="number" id="sheepNumber" value="10" min="1">
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="sheepClass">Sheep class</label>
+                                    <select id="sheepClass">
+                                        <option value="Weaned Lamb (Gaining 100 g/day) 15kg">Weaned Lamb (Gaining 100 g/day) 15kg</option>
+                                        <option value="Weaned Lamb (Gaining 200 g/day) 15kg">Weaned Lamb (Gaining 200 g/day) 15kg</option>
+                                        <option value="Adult Dry Sheep (Maintain Weight) 50kg CS2">Adult Dry Sheep (Maintain Weight) 50kg CS2</option>
+                                        <option value="Pregnant Ewe (Last 6 weeks, Single) 50kg">Pregnant Ewe (Last 6 weeks, Single) 50kg</option>
+                                        <option value="Ewe with Single Lamb at Foot 50kg">Ewe with Single Lamb at Foot 50kg</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Sheep Type</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="sheepDisplay" class="animal-display" style="display: none;">
+                    <h3>Current Sheep Flock</h3>
+                    <div class="table-container">
+                        <table id="sheepTable">
+                            <thead>
+                                <tr>
+                                    <th>Group</th>
+                                    <th>Class</th>
+                                    <th>Number</th>
+                                    <th>DSE Rating</th>
+                                    <th>Total DSE</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="total-display">
+                        <span>Total Sheep DSE: <strong id="totalSheepDSE">0.00</strong></span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearSheepData()">Clear Sheep Data</button>
+                </div>
+            </section>
+
+            <!-- Goat Section -->
+            <section class="section">
+                <h2>🐐 Goat Details</h2>
+                <div class="expandable-section">
+                    <button class="expand-btn" onclick="toggleSection('goat-form')">Add and manage goats</button>
+                    <div id="goat-form" class="expandable-content">
+                        <form id="addGoatForm" class="animal-form">
+                            <h3>Add Goat Type</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="goatTypeName">Goat group name</label>
+                                    <input type="text" id="goatTypeName" placeholder="e.g., Does, Kids, Bucks">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="goatNumber">Number of goats</label>
+                                    <input type="number" id="goatNumber" value="10" min="1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="goatClass">Goat class</label>
+                                    <select id="goatClass">
+                                        <option value="Dry doe">Dry doe</option>
+                                        <option value="Breeding doe - During pregnancy">Breeding doe - During pregnancy</option>
+                                        <option value="Breeding doe - During lactation – with single kid">Breeding doe - During lactation – with single kid</option>
+                                        <option value="Breeding doe - During lactation – with twins">Breeding doe - During lactation – with twins</option>
+                                        <option value="Weaner (Growing at 100g/day)">Weaner (Growing at 100g/day)</option>
+                                        <option value="Buck">Buck</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="goatWeight">Average live weight (kg)</label>
+                                    <input type="number" id="goatWeight" value="40" min="10" step="0.1">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Goat Type</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="goatDisplay" class="animal-display" style="display: none;">
+                    <h3>Current Goat Herd</h3>
+                    <div class="table-container">
+                        <table id="goatTable">
+                            <thead>
+                                <tr>
+                                    <th>Group</th>
+                                    <th>Class</th>
+                                    <th>Number</th>
+                                    <th>Weight (kg)</th>
+                                    <th>DSE Rating</th>
+                                    <th>Total DSE</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="total-display">
+                        <span>Total Goat DSE: <strong id="totalGoatDSE">0.00</strong></span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearGoatData()">Clear Goat Data</button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="section">
+                <h2>📈 Results</h2>
+                
+                <div class="results-summary">
+                    <h3>Herd Summary</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="displayTotalAE">0.00</div>
+                            <div class="metric-label">Total Animal Equivalents (AE)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="displayTotalDSE">0.00</div>
+                            <div class="metric-label">Total Dry Sheep Equivalents (DSE)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dseBreakdown" class="results-summary" style="display: none;">
+                    <h3>DSE Breakdown</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="displaySheepDSE">0.00</div>
+                            <div class="metric-label">Sheep DSE</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="displayGoatDSE">0.00</div>
+                            <div class="metric-label">Goat DSE</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-summary">
+                    <h3>Grazing Budget Results</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="dailyDemand">0.00</div>
+                            <div class="metric-label">Total Daily Demand (kg/day)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="availableDM">0.00</div>
+                            <div class="metric-label">Available Dry Matter (kg)</div>
+                        </div>
+                        <div class="metric-card highlight">
+                            <div class="metric-value" id="grazingDays">0.0</div>
+                            <div class="metric-label">Estimated Grazing Days</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3>Feed Budget Visualization</h3>
+                    <div class="chart-container">
+                        <canvas id="feedBudgetChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="notes">
+                    <h3>Notes:</h3>
+                    <ul>
+                        <li>This is an estimate based on the provided information and standard values</li>
+                        <li>Actual grazing days may vary based on weather, pasture growth, and animal behavior</li>
+                        <li>Regular monitoring is recommended to adjust grazing plans as needed</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>Forage Budget Calculator | v2.0 | Converted to Native JavaScript</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="calculations.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

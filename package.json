@@ -1,0 +1,19 @@
+{
+  "name": "forage-budget-calculator",
+  "version": "2.0.0",
+  "description": "A native JavaScript forage budget calculator for grazing management",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -s . -l 8000",
+    "dev": "npx serve -s . -l 8000"
+  },
+  "keywords": [
+    "agriculture",
+    "grazing",
+    "forage",
+    "calculator",
+    "livestock"
+  ],
+  "author": "",
+  "license": "Apache-2.0"
+}
